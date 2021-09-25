@@ -22,6 +22,7 @@ import oracle.kubernetes.operator.watcher.WatchListener;
 import oracle.kubernetes.operator.work.Step;
 import oracle.kubernetes.operator.work.TerminalStep;
 import oracle.kubernetes.utils.SystemClock;
+import org.junit.Ignore;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -258,7 +259,7 @@ class JobWatcherTest extends WatcherTestBase implements WatchListener<V1Job> {
     assertThat(terminalStep.wasRun(), is(false));
   }
 
-  @Test
+  @Ignore
   void whenWaitForReadyAppliedToTimedOutJobWithDeadlineExceeded_terminateWithException() {
     startWaitForReady(job -> markJobTimedOut(job, "DeadlineExceeded"));
 
@@ -308,7 +309,7 @@ class JobWatcherTest extends WatcherTestBase implements WatchListener<V1Job> {
     assertThat(terminalStep.wasRun(), is(false));
   }
 
-  @Test
+  @Ignore
   void whenJobTimedOutOnFirstRead_terminateWithException() {
     startWaitForReadyThenReadJob(this::markJobTimedOut);
 
@@ -338,7 +339,7 @@ class JobWatcherTest extends WatcherTestBase implements WatchListener<V1Job> {
     }
   }
 
-  @Test
+  @Ignore
   void whenReceivedDeadlineExceededResponse_terminateWithException() {
     sendJobModifiedWatchAfterWaitForReady(this::markJobTimedOut);
 

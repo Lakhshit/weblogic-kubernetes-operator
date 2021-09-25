@@ -173,14 +173,21 @@ public class JobWatcher extends Watcher<V1Job> implements WatchListener<V1Job>, 
     return Optional.ofNullable(jobCondition).map(V1JobCondition::getStatus).orElse("");
   }
 
+  /**
+   * Get the job failed reason.
+   * @param job job
+   * @return Job failed reason
+   */
+  public static String getFailedReason(V1Job job) {
+    List<V1JobCondition> conditions = Optional.ofNullable(job)
+            .map(introJob -> getJobConditions(introJob)).orElse(null);
+    return Optional.ofNullable(conditions).map(jobConditions -> checkCondition(jobConditions)).orElse(null);
+  }
 
-  static String getFailedReason(V1Job job) {
-    V1JobStatus status = job.getStatus();
-    if (status != null && status.getConditions() != null) {
-      for (V1JobCondition cond : status.getConditions()) {
-        if ("Failed".equals(cond.getType()) && "True".equals(cond.getStatus())) {
-          return cond.getReason();
-        }
+  private static String checkCondition(List<V1JobCondition> conditions) {
+    for (V1JobCondition cond : conditions) {
+      if ("Failed".equals(cond.getType()) && "True".equals(cond.getStatus())) {
+        return cond.getReason();
       }
     }
     return null;
@@ -298,7 +305,8 @@ public class JobWatcher extends Watcher<V1Job> implements WatchListener<V1Job>, 
     // be available for reading
     @Override
     boolean shouldTerminateFiber(V1Job job) {
-      return isFailed(job) && ("DeadlineExceeded".equals(getFailedReason(job)));
+      //return isFailed(job) && ("DeadlineExceeded".equals(getFailedReason(job)));
+      return false;
     }
 
     // create an exception to terminate the fiber

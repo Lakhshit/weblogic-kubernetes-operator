@@ -55,6 +55,7 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 import static oracle.kubernetes.operator.DomainSourceType.FromModel;
 import static oracle.kubernetes.operator.DomainStatusUpdater.INSPECTING_DOMAIN_PROGRESS_REASON;
 import static oracle.kubernetes.operator.DomainStatusUpdater.createProgressingStartedEventStep;
+import static oracle.kubernetes.operator.JobWatcher.getFailedReason;
 import static oracle.kubernetes.operator.LabelConstants.INTROSPECTION_DOMAIN_SPEC_GENERATION;
 import static oracle.kubernetes.operator.LabelConstants.INTROSPECTION_STATE_LABEL;
 import static oracle.kubernetes.operator.ProcessingConstants.DOMAIN_INTROSPECT_REQUESTED;
@@ -529,17 +530,17 @@ public class JobHelper {
       String result = callResponse.getResult();
       LOGGER.fine("+++++ ReadDomainIntrospectorPodLogResponseStep: \n" + result);
 
+      V1Job domainIntrospectorJob =
+              (V1Job) packet.get(ProcessingConstants.DOMAIN_INTROSPECTOR_JOB);
+
       if (result != null) {
-        convertJobLogsToOperatorLogs(result);
+        convertJobLogsToOperatorLogs(result, domainIntrospectorJob);
         if (!severeStatuses.isEmpty()) {
           updateStatus(packet.getSpi(DomainPresenceInfo.class));
         }
         packet.put(ProcessingConstants.DOMAIN_INTROSPECTOR_LOG_RESULT, result);
         MakeRightDomainOperation.recordInspection(packet);
       }
-
-      V1Job domainIntrospectorJob =
-              (V1Job) packet.get(ProcessingConstants.DOMAIN_INTROSPECTOR_JOB);
 
       if (isNotComplete(domainIntrospectorJob)) {
         List<String> jobConditionsReason = new ArrayList<>();
@@ -592,25 +593,32 @@ public class JobHelper {
     //  - assumes any lines that don't start with '@[' are part
     //    of the previous log message
     //  - ignores all lines in the log up to the first line that starts with '@['
-    private void convertJobLogsToOperatorLogs(String jobLogs) {
+    private void convertJobLogsToOperatorLogs(String jobLogs, V1Job job) {
       for (String line : jobLogs.split(EOL_PATTERN)) {
         if (line.startsWith("@[")) {
-          logToOperator();
+          logToOperator(job);
           logMessage = new StringBuilder(INTROSPECTOR_LOG_PREFIX).append(line.trim());
         } else if (logMessage.length() > 0) {
           logMessage.append(System.lineSeparator()).append(line.trim());
         }
       }
-      logToOperator();
+      logToOperator(job);
     }
 
-    private void logToOperator() {
+    private void logToOperator(V1Job job) {
       if (logMessage.length() == 0) {
         return;
       }
 
+      String logLevel = "INFO";
       String logMsg = logMessage.toString();
-      switch (getLogLevel(logMsg)) {
+
+      //if ((!"BackoffLimitExceeded".equals(getFailedReason(job))) && (getEffectiveLogHome())){
+      if (!"BackoffLimitExceeded".equals(getFailedReason(job))) {
+        logLevel = getLogLevel(logMsg);
+      }
+
+      switch (logLevel) {
         case "SEVERE":
           addSevereStatus(logMsg); // fall through
         case "ERROR":
