@@ -336,7 +336,7 @@ function purgeDefaultResources() {
 function purgeVoyagerResources() {
   # get rid of Voyager CRD deletion deadlock:  https://github.com/kubernetes/kubernetes/issues/60538
   printInfo "Delete extra resources associated with Voyager Ingress Controller"
-  crds=(certificates ingresses)
+  crds=$(certificates ingresses)
   for crd in "${crds[@]}"; do
     pairs=($(${kubernetesCli} get ${crd}.voyager.appscode.com --all-namespaces -o jsonpath='{range .items[*]}{.metadata.name} {.metadata.namespace} {end}' || true))
     total=${#pairs[*]}

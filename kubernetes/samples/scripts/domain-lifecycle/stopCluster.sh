@@ -4,7 +4,7 @@
 #
 
 script="${BASH_SOURCE[0]}"
-scriptDir="$( cd "$( dirname "${script}" )" && pwd )"
+scriptDir=$(cd $(dirname ${script} ) && pwd )
 source ${scriptDir}/helper.sh
 if [ "${debug}" == "true" ]; then set -x; fi;
 
