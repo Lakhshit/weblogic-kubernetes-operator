@@ -610,12 +610,11 @@ public class JobHelper {
         return;
       }
 
-      String logLevel = "INFO";
       String logMsg = logMessage.toString();
+      String logLevel = getLogLevel(logMsg);
 
-      //if ((!"BackoffLimitExceeded".equals(getFailedReason(job))) && (getEffectiveLogHome())){
-      if (!"BackoffLimitExceeded".equals(getFailedReason(job))) {
-        logLevel = getLogLevel(logMsg);
+      if (("BackoffLimitExceeded".equals(getFailedReason(job))) && (logLevel.equals("FINE"))) {
+        logLevel = "INFO";
       }
 
       switch (logLevel) {
