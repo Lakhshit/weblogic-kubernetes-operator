@@ -672,14 +672,14 @@ public class JobHelper {
     if (logged == null || !logged) {
       packet.put(ProcessingConstants.INTROSPECTOR_JOB_FAILURE_LOGGED, Boolean.TRUE);
       LOGGER.info(INTROSPECTOR_JOB_FAILED,
-          Objects.requireNonNull(domainIntrospectorJob.getMetadata()).getName(),
-          domainIntrospectorJob.getMetadata().getNamespace(),
-          domainIntrospectorJob.getStatus().toString(),
-          jobPodName);
+              Objects.requireNonNull(domainIntrospectorJob.getMetadata()).getName(),
+              domainIntrospectorJob.getMetadata().getNamespace(),
+              domainIntrospectorJob.getStatus().toString(),
+              jobPodName);
       LOGGER.fine(INTROSPECTOR_JOB_FAILED_DETAIL,
-          domainIntrospectorJob.getMetadata().getNamespace(),
-          domainIntrospectorJob.getMetadata().getName(),
-          domainIntrospectorJob.toString());
+              domainIntrospectorJob.getMetadata().getNamespace(),
+              domainIntrospectorJob.getMetadata().getName(),
+              domainIntrospectorJob.toString());
     }
   }
 

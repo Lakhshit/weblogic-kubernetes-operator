@@ -39,6 +39,7 @@
 #        MW_HOME     = MiddleWare Install Home - defaults to ${ORACLE_HOME}
 #        WL_HOME     = WebLogic Install Home - defaults to ${ORACLE_HOME}/wlserver
 #        INTROSPECTOR_LOG_FILE_MAX = Max number of log files to keep around (default 11).
+#        WDT_LOG_FILE_MAX = Max number of WDT log files to keep around (default 11).
 #
 #    - Transitively requires other env vars for startNodeManager.sh, wlst.sh, modelInImage.sh,
 #      and introspectDomain.py (see these scripts to find out what else needs to be set).

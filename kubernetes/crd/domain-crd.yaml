@@ -5,7 +5,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    weblogic.sha256: fc558513a2650fa19f6bb20b9bb959cdcdea01fc45a37dc3841385467b7131e8
+    weblogic.sha256: 9ee9814490d3cc8d5ad37dc3f1bb15c55d1f3fa8d9135040d5a50b3977e0894a
   name: domains.weblogic.oracle
 spec:
   group: weblogic.oracle
@@ -232,7 +232,7 @@ spec:
                   introspectorJobActiveDeadlineSeconds:
                     description: The introspector job timeout value in seconds. If
                       this field is specified, then the operator's ConfigMap `data.introspectorJobActiveDeadlineSeconds`
-                      value is ignored. Defaults to 120 seconds.
+                      value is ignored. Defaults to 300 seconds.
                     type: number
                 type: object
               configOverrideSecrets:

@@ -31,7 +31,7 @@ public class Configuration {
 
   @Description("The introspector job timeout value in seconds. If this field is specified, "
           + "then the operator's ConfigMap `data.introspectorJobActiveDeadlineSeconds` value is ignored. "
-          + "Defaults to 120 seconds.")
+          + "Defaults to 300 seconds.")
   private Long introspectorJobActiveDeadlineSeconds;
 
   @Description(

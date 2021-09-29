@@ -104,7 +104,7 @@ The current status of the operation of the WebLogic domain. Updated automaticall
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `introspectorJobActiveDeadlineSeconds` | number | The introspector job timeout value in seconds. If this field is specified, then the operator's ConfigMap `data.introspectorJobActiveDeadlineSeconds` value is ignored. Defaults to 120 seconds. |
+| `introspectorJobActiveDeadlineSeconds` | number | The introspector job timeout value in seconds. If this field is specified, then the operator's ConfigMap `data.introspectorJobActiveDeadlineSeconds` value is ignored. Defaults to 300 seconds. |
 | `istio` | [Istio](#istio) | The Istio service mesh integration settings. |
 | `model` | [Model](#model) | Model in image model files and properties. |
 | `opss` | [Opss](#opss) | Settings for OPSS security. |
