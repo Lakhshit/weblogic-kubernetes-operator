@@ -19,7 +19,7 @@
 #
 
 # Initialize
-script="${BASH_SOURCE[0]}"
+script=$0
 scriptDir="$( cd "$( dirname "${script}" )" && pwd )"
 source ${scriptDir}/../../common/utility.sh
 source ${scriptDir}/../../common/wdt-and-wit-utility.sh

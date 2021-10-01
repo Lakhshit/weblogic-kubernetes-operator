@@ -33,9 +33,8 @@
 #   is selected, it only sets the start policy to ALWAYS.
 # 
 
-script="${BASH_SOURCE[0]}"
-scriptDirName=$(dirname ${script} )
-scriptDir=$(cd ${scriptDirName} && pwd )
+script=$0
+scriptDir="$( cd "$( dirname "${script}" )" && pwd )"
 source ${scriptDir}/helper.sh
 if [ "${debug}" == "true" ]; then set -x; fi;
 set -eu

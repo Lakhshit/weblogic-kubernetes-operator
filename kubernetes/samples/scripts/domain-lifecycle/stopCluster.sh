@@ -3,7 +3,7 @@
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl.
 #
 
-script="${BASH_SOURCE[0]}"
+script=$0
 scriptDir=$(cd $(dirname ${script} ) && pwd )
 source ${scriptDir}/helper.sh
 if [ "${debug}" == "true" ]; then set -x; fi;

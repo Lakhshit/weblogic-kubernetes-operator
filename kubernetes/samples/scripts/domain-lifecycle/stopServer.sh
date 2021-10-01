@@ -31,7 +31,7 @@
 #   start policy to NEVER.
 # 
 
-script="${BASH_SOURCE[0]}"
+script=$0
 scriptDir="$( cd "$( dirname "${script}" )" && pwd )"
 source ${scriptDir}/helper.sh
 if [ "${debug}" == "true" ]; then set -x; fi;
