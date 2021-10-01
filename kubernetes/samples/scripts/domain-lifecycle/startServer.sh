@@ -34,7 +34,8 @@
 # 
 
 script="${BASH_SOURCE[0]}"
-scriptDir=$(cd $(dirname ${script} ) && pwd )
+scriptDirName=$(dirname ${script} )
+scriptDir=$(cd ${scriptDirName} && pwd )
 source ${scriptDir}/helper.sh
 if [ "${debug}" == "true" ]; then set -x; fi;
 set -eu
