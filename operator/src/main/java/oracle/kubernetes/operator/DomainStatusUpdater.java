@@ -70,6 +70,7 @@ import static oracle.kubernetes.operator.WebLogicConstants.RUNNING_STATE;
 import static oracle.kubernetes.operator.WebLogicConstants.SHUTDOWN_STATE;
 import static oracle.kubernetes.operator.helpers.EventHelper.EventItem.DOMAIN_PROCESSING_ABORTED;
 import static oracle.kubernetes.operator.helpers.EventHelper.EventItem.DOMAIN_PROCESSING_STARTING;
+import static oracle.kubernetes.operator.helpers.JobHelper.PREVIOUS_DOMAIN_STATUS_MESSAGE;
 import static oracle.kubernetes.weblogic.domain.model.DomainConditionType.Available;
 import static oracle.kubernetes.weblogic.domain.model.DomainConditionType.ConfigChangesPendingRestart;
 import static oracle.kubernetes.weblogic.domain.model.DomainConditionType.Failed;
@@ -278,7 +279,9 @@ public class DomainStatusUpdater {
               Component.createFor(info));
       }
       DomainStatusUpdaterContext context = createContext(packet);
-      DomainStatus newStatus = context.getNewStatus();
+      String existingMessage = (String)packet.get(PREVIOUS_DOMAIN_STATUS_MESSAGE);
+
+      DomainStatus newStatus = context.getNewStatus(existingMessage);
 
       return context.isStatusUnchanged(newStatus)
           ? doNext(packet)
@@ -397,7 +400,7 @@ public class DomainStatusUpdater {
       this.domainStatusUpdaterStep = domainStatusUpdaterStep;
     }
 
-    DomainStatus getNewStatus() {
+    DomainStatus getNewStatus(String existingMessage) {
       DomainStatus newStatus = cloneStatus();
       modifyStatus(newStatus);
 
@@ -405,19 +408,11 @@ public class DomainStatusUpdater {
         newStatus.setMessage(
             Optional.ofNullable(info).map(DomainPresenceInfo::getValidationWarningsAsString).orElse(null));
       }
-      if (shouldUpdateFailureCount(newStatus)) {
+      if (shouldUpdateFailureCount(newStatus, existingMessage)) {
         newStatus.incrementIntrospectJobFailureCount();
       }
 
       return newStatus;
-    }
-
-    private String getExistingStatusMessage() {
-      return Optional.ofNullable(info)
-              .map(DomainPresenceInfo::getDomain)
-              .map(Domain::getStatus)
-              .map(DomainStatus::getMessage)
-              .orElse(null);
     }
 
     private DomainCondition getProgressingCondition() {
@@ -432,9 +427,9 @@ public class DomainStatusUpdater {
           .map(s -> s.getConditionWithType(Progressing)).orElse(null);
     }
 
-    private boolean shouldUpdateFailureCount(DomainStatus newStatus) {
+    private boolean shouldUpdateFailureCount(DomainStatus newStatus, String existingMessage) {
       return transitFromProgressing(newStatus)
-          && getExistingStatusMessage() == null
+          && existingMessage == null
           && isBackoffLimitExceeded(newStatus);
     }
 
@@ -448,7 +443,8 @@ public class DomainStatusUpdater {
           .orElse(Collections.emptyList());
 
       for (DomainCondition cond : domainConditions) {
-        if ("BackoffLimitExceeded".equals(cond.getReason())) {
+        if (("BackoffLimitExceeded".equals(cond.getReason()))
+                || ("DeadlineExceeded").equals(cond.getReason())) {
           return true;
         }
       }

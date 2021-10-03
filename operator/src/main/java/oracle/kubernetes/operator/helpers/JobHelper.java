@@ -67,6 +67,7 @@ public class JobHelper {
   private static final LoggingFacade LOGGER = LoggingFactory.getLogger("Operator", "Operator");
   static final String INTROSPECTOR_LOG_PREFIX = "Introspector Job Log: ";
   private static final String EOL_PATTERN = "\\r?\\n";
+  public static final String PREVIOUS_DOMAIN_STATUS_MESSAGE = "PREVIOUS_DOMAIN_STATUS_MESSAGE";
 
   private JobHelper() {
   }
@@ -470,13 +471,12 @@ public class JobHelper {
           packet.putIfAbsent(START_TIME, Optional.ofNullable(job.getMetadata())
                   .map(m -> m.getCreationTimestamp()).orElse(OffsetDateTime.now()));
           return doNext(Step.chain(
-                  createProgressingStartedEventStep(info, INSPECTING_DOMAIN_PROGRESS_REASON, true, null),
-                  readDomainIntrospectorPodLogStep(null),
+                  createWatchDomainIntrospectorJobReadyStep(null),
                   deleteDomainIntrospectorJobStep(null),
                   ConfigMapHelper.createIntrospectorConfigMapStep(null),
                   ConfigMapHelper.readExistingIntrospectorConfigMap(namespace, info.getDomainUid()),
                   new DomainProcessorImpl.IntrospectionRequestStep(info),
-                  createDomainIntrospectorJobStep(getNext())), packet);
+                  createDomainIntrospectorJobStep(readDomainIntrospectorPodLogStep(getNext()))), packet);
         } else {
           packet.putIfAbsent(START_TIME, OffsetDateTime.now());
           return doNext(Step.chain(
@@ -532,7 +532,11 @@ public class JobHelper {
       if (result != null) {
         convertJobLogsToOperatorLogs(result);
         if (!severeStatuses.isEmpty()) {
-          updateStatus(packet.getSpi(DomainPresenceInfo.class));
+          DomainPresenceInfo info = packet.getSpi(DomainPresenceInfo.class);
+          String message = Optional.ofNullable(info.getDomain()).map(d -> d.getStatus())
+                  .map(s -> s.getMessage()).orElse(null);
+          packet.put(PREVIOUS_DOMAIN_STATUS_MESSAGE, message);
+          updateStatus(info);
         }
         packet.put(ProcessingConstants.DOMAIN_INTROSPECTOR_LOG_RESULT, result);
         MakeRightDomainOperation.recordInspection(packet);
