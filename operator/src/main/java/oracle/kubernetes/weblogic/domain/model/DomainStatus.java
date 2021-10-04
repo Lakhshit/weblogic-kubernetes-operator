@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
@@ -175,7 +176,8 @@ public class DomainStatus {
    */
   public DomainCondition getConditionWithType(DomainConditionType type) {
     for (DomainCondition condition : conditions) {
-      if (type == condition.getType()) {
+      if (type == condition.getType()
+              && Optional.ofNullable(condition.getStatus()).map(s -> !s.equals("False")).orElse(true)) {
         return condition;
       }
     }
