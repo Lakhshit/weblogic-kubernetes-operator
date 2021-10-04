@@ -1224,8 +1224,17 @@ class ItMiiDynamicUpdate {
     testUntil(
         () -> {
           Domain miidomain = getDomainCustomResource(domainUid, domainNamespace);
-          return (miidomain != null) && (miidomain.getStatus() != null) && (miidomain.getStatus().getMessage() != null)
-              && miidomain.getStatus().getMessage().contains(expectedErrorMsg);
+          if ((miidomain != null) && (miidomain.getStatus() != null) && (miidomain.getStatus().getMessage() != null)
+              && miidomain.getStatus().getMessage().contains(expectedErrorMsg)) {
+            return true;
+          } else {
+            if ((miidomain != null) && (miidomain.getStatus() != null)
+                    && (miidomain.getStatus().getMessage() != null)) {
+              logger.info("miidomain.getStatus().getMessage() is " + miidomain.getStatus().getMessage());
+              return miidomain.getStatus().getMessage().contains(expectedErrorMsg);
+            }
+          }
+          return false;
         },
         logger,
         "domain status message contains the expected error msg \"{0}\"",
