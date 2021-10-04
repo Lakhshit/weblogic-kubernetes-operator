@@ -568,22 +568,11 @@ public class JobHelper {
           jobConditionsReason.add(DomainStatusUpdater.ERR_INTROSPECTOR);
         }
         //Introspector job is incomplete, update domain status and terminate processing
-        Step nextStep = null;
-        int retryIntervalSeconds = TuningParameters.getInstance().getMainTuning().domainPresenceRecheckIntervalSeconds;
-
-        if (OffsetDateTime.now().isAfter(
-                getJobCreationTime(domainIntrospectorJob).plus(retryIntervalSeconds, SECONDS))) {
-          //Introspector job is incomplete and current time is greater than the lazy deletion time for the job,
-          //update the domain status and execute the next step
-          packet.put(DOMAIN_INTROSPECT_REQUESTED, INTROSPECTION_FAILED);
-          nextStep = getNext();
-        }
-
         return doNext(
                 DomainStatusUpdater.createFailureRelatedSteps(
                         onSeparateLines(jobConditionsReason),
                         onSeparateLines(severeStatuses),
-                        nextStep),
+                        null),
                 packet);
       }
 
