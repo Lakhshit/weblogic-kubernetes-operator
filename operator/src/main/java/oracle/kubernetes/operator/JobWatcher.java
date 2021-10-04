@@ -124,6 +124,7 @@ public class JobWatcher extends Watcher<V1Job> implements WatchListener<V1Job>, 
       List<V1JobCondition> conds = status.getConditions();
       if (conds != null) {
         for (V1JobCondition cond : conds) {
+          LOGGER.info("DEBUG: condition is " + cond);
           if ("Complete".equals(cond.getType())) {
             if ("True".equals(cond.getStatus())) { // TODO: Verify V1JobStatus.succeeded count?
               // Job is complete!
@@ -137,7 +138,12 @@ public class JobWatcher extends Watcher<V1Job> implements WatchListener<V1Job>, 
     return false;
   }
 
-  static boolean isFailed(V1Job job) {
+  /**
+   * Test if job is failed.
+   * @param job job
+   * @return true, if failed
+   */
+  public static boolean isFailed(V1Job job) {
     if (job == null) {
       return false;
     }

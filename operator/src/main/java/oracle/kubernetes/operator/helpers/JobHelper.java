@@ -55,11 +55,13 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 import static oracle.kubernetes.operator.DomainSourceType.FromModel;
 import static oracle.kubernetes.operator.DomainStatusUpdater.INSPECTING_DOMAIN_PROGRESS_REASON;
 import static oracle.kubernetes.operator.DomainStatusUpdater.createProgressingStartedEventStep;
+import static oracle.kubernetes.operator.JobWatcher.isFailed;
 import static oracle.kubernetes.operator.LabelConstants.INTROSPECTION_DOMAIN_SPEC_GENERATION;
 import static oracle.kubernetes.operator.LabelConstants.INTROSPECTION_STATE_LABEL;
 import static oracle.kubernetes.operator.ProcessingConstants.DOMAIN_INTROSPECT_REQUESTED;
 import static oracle.kubernetes.operator.logging.MessageKeys.INTROSPECTOR_JOB_FAILED;
 import static oracle.kubernetes.operator.logging.MessageKeys.INTROSPECTOR_JOB_FAILED_DETAIL;
+import static oracle.kubernetes.operator.logging.MessageKeys.INTROSPECTOR_JOB_FAILED_NO_POD;
 
 public class JobHelper {
 
@@ -467,16 +469,22 @@ public class JobHelper {
           packet.put(ProcessingConstants.DOMAIN_INTROSPECTOR_JOB, job);
         }
 
-        if (job != null) {
+        if ((job != null) && isFailed(job)) {
           packet.putIfAbsent(START_TIME, Optional.ofNullable(job.getMetadata())
                   .map(m -> m.getCreationTimestamp()).orElse(OffsetDateTime.now()));
           return doNext(Step.chain(
-                  createWatchDomainIntrospectorJobReadyStep(null),
+                  deleteDomainIntrospectorJobStep(null),
+                  createDomainIntrospectorJobStep(getNext())), packet);
+        } else if (job != null) {
+          packet.putIfAbsent(START_TIME, Optional.ofNullable(job.getMetadata())
+                  .map(m -> m.getCreationTimestamp()).orElse(OffsetDateTime.now()));
+          return doNext(Step.chain(
+                  readDomainIntrospectorPodLogStep(null),
                   deleteDomainIntrospectorJobStep(null),
                   ConfigMapHelper.createIntrospectorConfigMapStep(null),
                   ConfigMapHelper.readExistingIntrospectorConfigMap(namespace, info.getDomainUid()),
                   new DomainProcessorImpl.IntrospectionRequestStep(info),
-                  createDomainIntrospectorJobStep(readDomainIntrospectorPodLogStep(getNext()))), packet);
+                  createDomainIntrospectorJobStep(getNext())), packet);
         } else {
           packet.putIfAbsent(START_TIME, OffsetDateTime.now());
           return doNext(Step.chain(
@@ -668,11 +676,18 @@ public class JobHelper {
     String jobPodName = (String) packet.get(ProcessingConstants.JOB_POD_NAME);
     if (logged == null || !logged) {
       packet.put(ProcessingConstants.INTROSPECTOR_JOB_FAILURE_LOGGED, Boolean.TRUE);
-      LOGGER.info(INTROSPECTOR_JOB_FAILED,
-          Objects.requireNonNull(domainIntrospectorJob.getMetadata()).getName(),
-          domainIntrospectorJob.getMetadata().getNamespace(),
-          domainIntrospectorJob.getStatus().toString(),
-          jobPodName);
+      if (jobPodName != null) {
+        LOGGER.info(INTROSPECTOR_JOB_FAILED,
+                Objects.requireNonNull(domainIntrospectorJob.getMetadata()).getName(),
+                domainIntrospectorJob.getMetadata().getNamespace(),
+                domainIntrospectorJob.getStatus().toString(),
+                jobPodName);
+      } else {
+        LOGGER.info(INTROSPECTOR_JOB_FAILED_NO_POD,
+                Objects.requireNonNull(domainIntrospectorJob.getMetadata()).getName(),
+                domainIntrospectorJob.getMetadata().getNamespace(),
+                domainIntrospectorJob.getStatus().toString());
+      }
       LOGGER.fine(INTROSPECTOR_JOB_FAILED_DETAIL,
           domainIntrospectorJob.getMetadata().getNamespace(),
           domainIntrospectorJob.getMetadata().getName(),
