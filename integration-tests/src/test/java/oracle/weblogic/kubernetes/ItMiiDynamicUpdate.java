@@ -1251,6 +1251,12 @@ class ItMiiDynamicUpdate {
                   && (domainCondition.getMessage() != null
                   && domainCondition.getMessage().contains(expectedErrorMsg))) {
                 return true;
+              } else {
+                logger.info("domainCondition is " + domainCondition);
+                if (domainCondition.getType() != null) {
+                  logger.info("domainCondition.getType() is " + domainCondition.getType());
+                  logger.info("domainCondition.getMessage() is " + domainCondition.getMessage());
+                }
               }
             }
           }
