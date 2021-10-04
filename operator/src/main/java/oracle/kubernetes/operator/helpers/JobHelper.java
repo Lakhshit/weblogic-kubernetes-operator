@@ -51,10 +51,10 @@ import oracle.kubernetes.weblogic.domain.model.IntrospectorJobEnvVars;
 import oracle.kubernetes.weblogic.domain.model.ManagedServer;
 import oracle.kubernetes.weblogic.domain.model.ServerEnvVars;
 
+import static java.time.temporal.ChronoUnit.SECONDS;
 import static oracle.kubernetes.operator.DomainSourceType.FromModel;
 import static oracle.kubernetes.operator.DomainStatusUpdater.INSPECTING_DOMAIN_PROGRESS_REASON;
 import static oracle.kubernetes.operator.DomainStatusUpdater.createProgressingStartedEventStep;
-import static oracle.kubernetes.operator.JobWatcher.isFailed;
 import static oracle.kubernetes.operator.LabelConstants.INTROSPECTION_DOMAIN_SPEC_GENERATION;
 import static oracle.kubernetes.operator.LabelConstants.INTROSPECTION_STATE_LABEL;
 import static oracle.kubernetes.operator.ProcessingConstants.DOMAIN_INTROSPECT_REQUESTED;
@@ -468,13 +468,7 @@ public class JobHelper {
           packet.put(ProcessingConstants.DOMAIN_INTROSPECTOR_JOB, job);
         }
 
-        if ((job != null) && isFailed(job)) {
-          packet.putIfAbsent(START_TIME, Optional.ofNullable(job.getMetadata())
-                  .map(m -> m.getCreationTimestamp()).orElse(OffsetDateTime.now()));
-          return doNext(Step.chain(
-                  deleteDomainIntrospectorJobStep(null),
-                  createDomainIntrospectorJobStep(getNext())), packet);
-        } else if (job != null) {
+        if (job != null) {
           packet.putIfAbsent(START_TIME, Optional.ofNullable(job.getMetadata())
                   .map(m -> m.getCreationTimestamp()).orElse(OffsetDateTime.now()));
           return doNext(Step.chain(
@@ -567,11 +561,22 @@ public class JobHelper {
           jobConditionsReason.add(DomainStatusUpdater.ERR_INTROSPECTOR);
         }
         //Introspector job is incomplete, update domain status and terminate processing
+        Step nextStep = null;
+        int retryIntervalSeconds = TuningParameters.getInstance().getMainTuning().domainPresenceRecheckIntervalSeconds;
+
+        if (OffsetDateTime.now().isAfter(
+                getJobCreationTime(domainIntrospectorJob).plus(retryIntervalSeconds, SECONDS))) {
+          //Introspector job is incomplete and current time is greater than the lazy deletion time for the job,
+          //update the domain status and execute the next step
+          packet.put(DOMAIN_INTROSPECT_REQUESTED, INTROSPECTION_FAILED);
+          nextStep = getNext();
+        }
+
         return doNext(
                 DomainStatusUpdater.createFailureRelatedSteps(
                         onSeparateLines(jobConditionsReason),
                         onSeparateLines(severeStatuses),
-                        null),
+                        nextStep),
                 packet);
       }
 
