@@ -25,18 +25,21 @@ function printError {
 function checkInputFiles {
   if [[ "${valuesInputFile}" =~ [,] ]] ; then
     echo "Found a comma separated list of input files"
+    echo ${valuesInputFile}
     IFS=','
-    read -a temp <<< "${valuesInputFile}"
+    read -a temp <<-EOL
+    ${valuesInputFile}
+	EOL
 
     # We want to keep valuesInputFile pointing to the yaml since
     # the validate function expects it.
     local extension=$(echo "${temp[0]}" | sed 's/^.*\.//')
     if [ ${extension} == 'yaml' ]; then
-       valuesInputFile=${temp[0]}
+       valuesInputFile=$(echo ${temp[0]} | sed 's/^[ \t]*//')
        valuesInputFile1=${temp[1]}
     else
        valuesInputFile=${temp[1]}
-       valuesInputFile1=${temp[0]}
+       valuesInputFile1=$(echo ${temp[0]} | sed 's/^[ \t]*//')
     fi
   fi
 }
